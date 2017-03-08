@@ -1,6 +1,5 @@
 import Html exposing (beginnerProgram, div, button, text)
 import Html.Events exposing (onClick)
-
 import Array exposing (repeat, get, set, Array)
 
 type Player = X | O | DRAW
@@ -43,15 +42,26 @@ update pos model =
     let
       cells = set (pos-1) model.current model.cells
       winner = checkWinner cells
+      isFinished = winner /= DRAW || (checkDraw winner cells)
     in
       {
       current = model.current |> opponent
-      , cells = if winner == DRAW then cells else repeat 9 DRAW
-      , games = if winner == DRAW then model.games else List.append model.games [winner]
-    --    cells = set pos model.cells,
-    --    games = []
+      , cells = if isFinished then repeat 9 DRAW else cells
+      , games =
+        if isFinished
+        then List.append model.games [winner]
+        else model.games
       }
   else model
+
+checkDraw : Player -> Array Player -> Bool
+checkDraw winner cells =
+  (winner == DRAW) && (
+    cells
+    |> Array.toList
+    |> List.filter (\n -> n == DRAW)
+    |> List.isEmpty
+  )
 
 checkCase : List Int -> Array Player -> Player
 checkCase l cells =
@@ -65,19 +75,6 @@ checkCase l cells =
   in
     lll
 
-
-
---  let
---    ll =
---    func = (\a b -> if a == b then a else DRAW)
--- in
---   ll
---    let
---      h = List.head ll |> Maybe.withDefault DRAW
---      t = List.tail ll |> Maybe.withDefault DRAW
---    in
---     List.foldl func h t
-
 checkWinner : Array Player -> Player
 checkWinner cells =
   let
@@ -86,17 +83,11 @@ checkWinner cells =
       , [1,4,7] , [2,5,8] , [3,6,9]   --vertical
       , [1,5,9] , [3,5,7]             --diagonals
     ]
-    match = (\n -> checkCase n cells)
-    matched = List.map (match) cases
-    res = List.filter (\n -> n /=  DRAW) matched
+    matched = List.map (\n -> checkCase n cells) cases
+  in
+    List.filter (\n -> n /=  DRAW) matched
       |> List.head
       |> Maybe.withDefault DRAW
-  in
-    res
-
-
-    --List.map (\n -> (matchWinner n cells)) cases
-
 
 main = beginnerProgram {
     model =  {
